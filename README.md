@@ -1,8 +1,11 @@
 # Project Title
 
-**Submitted By:** Arpit Jain
-**College:** The LNM Institute of Information Technology Jaipur
-**Email:** [arpitjain682005@gmail.com]
+**Submitted By** 
+Arpit Jain
+**College:**
+The LNM Institute of Information Technology Jaipur
+**Email:**
+[arpitjain682005@gmail.com]
 
 ## Task 1
 
