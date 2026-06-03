@@ -22,8 +22,7 @@
 
 ## Task Overview
 
-    The objective of this task is to:
-
+The objective of this task is to:
 - Write a small C program that computes the sum from 1 to N
 - Compile and execute this code using a standard GCC compiler
 - Cross compile this code using the RISC-V compiler GCC toolchain (`riscv64-unknown-elf-gcc`) with both optimization levels `-O1` and `-Ofast`
@@ -183,17 +182,17 @@ Number of instructions = 56 ÷ 4 = 14 instructions
 | `10184` | `ff010113` | `addi sp,sp,-16` | Prologue: allocate 16 bytes on the stack for the stack frame |
 | `10188` | `00113423` | `sd ra,8(sp)` | Save return address register `ra` onto the stack |
 | `1018c` | `03200793` | `li a5,50` | Load immediate: set loop counter `a5 = 50` (value of `n`) |
-| `10190` | `fff7879b` | `addiw a5,a5,-1` | Decrement loop counter: `a5 = a5 - 1` (32-bit word operation) |
-| `10194` | `fe079ee3` | `bnez a5,10190` | Branch if `a5 ≠ 0` → jump back to `10190` (this is the loop) |
+| `10190` | `fff7879b` | `addiw a5,a5,-1` | Decrement loop counter: `a5 = a5 - 1`|
+| `10194` | `fe079ee3` | `bnez a5,10190` | Branch if `a5 ≠ 0` → jump back to `10190` |
 | `10198` | `4fb00613` | `li a2,1275` | Load the **pre-computed sum** `1275` into `a2` (3rd printf arg) |
 | `1019c` | `03200593` | `li a1,50` | Load `n=50` into `a1` (2nd printf arg: `%d` = n) |
 | `101a0` | `00021537` | `lui a0,0x21` | Load upper 20 bits of printf format string address into `a0` |
 | `101a4` | `18050513` | `addi a0,a0,384` | Add lower 12 bits → complete the format string address in `a0` |
-| `101a8` | `26c000ef` | `jal ra,10414 <printf>` | Call `printf` — jump and link (saves return address in `ra`) |
+| `101a8` | `26c000ef` | `jal ra,10414 <printf>` | Call `printf` — jump and link |
 | `101ac` | `00000513` | `li a0,0` | Load return value `0` into `a0` (for `return 0`) |
 | `101b0` | `00813083` | `ld ra,8(sp)` | Restore return address from stack |
-| `101b4` | `01010113` | `addi sp,sp,16` | Epilogue: deallocate the 16-byte stack frame |
-| `101b8` | `00008067` | `ret` | Return to caller (jumps to address in `ra`) |
+| `101b4` | `01010113` | `addi sp,sp,16` | deallocate the 16-byte stack frame |
+| `101b8` | `00008067` | `ret` | Return|
 
 ### Key Insights (`-O1`)
 
@@ -256,7 +255,7 @@ Number of instructions = 44 ÷ 4 = 11 instructions
 - **The whole loop is missing** - There’s no `addiw`, no `bnez`, no loop counter register. The compiler was able to calculate this at compile time.
 - The data-loading instruction (`li a2,1275`) is the **first such instruction** that comes in the program - The sum `1+2+...+50=1275` was folded by `-Ofast`.
 - The sequence of `lui a0,0x21` followed by `addi a0,a0,384` creates an address for the printf format string. This pattern of a **2-instruction PC relative address load** is typical for RISC-V.
-- As you can see, `sd ra,8(sp)` instruction to save `ra` register was moved to **follow** the `li` instructions. It is **instruction scheduling**, done by the compiler to prevent stalling pipelines.
+- `sd ra,8(sp)` instruction to save `ra` register was moved to **follow** the `li` instructions. It is **instruction scheduling**, done by the compiler to prevent stalling pipelines.
 - The `printf` call points to `10408` in this listing, compared to `10414` with `-O1`. It happens because the binary got a new layout.
 
 ![Ofast Objdump](objdump_sum_ofast.png)
@@ -290,7 +289,7 @@ Reduction: 14 - 11 = 3 fewer instructions with -Ofast (≈ 21% reduction)
 
 ### Key Insight
 
-Even for `-O1`, GCC does **constant folding** in the sense that it realizes that `1+2+…+50=1275` can be done at compile time. Nevertheless, for `-O1`, GCC outputs the loop code itself as dead code. However, `-Ofast` optimization level is drastic enough to remove the loop altogether, leaving us with a compact 11-instruction `main` function.
+Even for `-O1`, GCC does **constant folding** in the sense that it realizes that `1+2+…+50=1275` can be done at compile time. Not for `-O1`, GCC outputs the loop code itself as dead code. However, `-Ofast` optimization level is significant enough to remove the loop altogether, leaving us with a compact 11-instruction `main` function.
 
 ---
 
@@ -310,7 +309,7 @@ Even for `-O1`, GCC does **constant folding** in the sense that it realizes that
 ## Learnings
 
 ### 1. Cross-Compilation Idea
-The **cross-compilation**, as done with `riscv64-unknown-elf-gcc`, is a process of running a compiler in one environment (x86-based host) and producing object code suitable for a completely different target architecture (RISC-V 64). Such an approach is necessary for embedded systems and VLSI development when the hardware does not possess sufficient capabilities to operate a compiler.
+The **cross-compilation**, as done with `riscv64-unknown-elf-gcc`, is a process of running a compiler in one environment (x86-based host) and producing object code suitable for a completely different target architecture (RISC-V 64).It is necessary for embedded systems and VLSI development when the hardware does not possess sufficient capabilities to operate a compiler.
 
 ### 2. Instruction Width in RISC-V
 All instructions in the basic `rv64i` RISC-V ISA have a fixed size of **4 bytes (32 bits)**. The number of instructions can be computed very simply:
@@ -342,18 +341,12 @@ Both the `-O1` and `-Ofast` optimizations did **constant folding** in this progr
 - Changing any of these flags would produce a completely different assembly language
 
 ### 7. RISC-V Calling Conventions
-By looking at objdump output, you can see the calling conventions specified in the **RISC-V ABI**:
+By looking at objdump output, we can see the calling conventions specified in the **RISC-V ABI**:
 - `a0` - 1st argument of a function / return value
 - `a1` - 2nd argument
 - `a2` - 3rd argument
 - `ra` - return address (you need to save/restore this register when you call another function)
 - `sp` - stack pointer (16-byte )
-
-### 8. The Importance of Using `objdump`
-Using `objdump -d` is an indispensable part of embedded/VLSI projects to:
-- Check that the compiler produced correct assembly
-- Calculate how long some function takes to execute (counting instructions in cycle accurate simulators)
-- Debug problems which appear only in assembly
 ---
 
 ## Conclusion
@@ -369,7 +362,7 @@ In this experiment, the entire process of writing, compiling, and analyzing a C 
    - `-O1` -> `0x101bc − 0x10184 = 56 bytes -> **14 instructions**`
    - `-Ofast` -> `0x100dc − 0x100b0 = 44 bytes -> **11 instructions**`
 
-4. As seen from these observations, one can note that **optimizations implemented by compilers are quite effective and can be measured** – `-Ofast` decreases number of instructions by 21% (3 instructions) relative to `-O1` for this particular task
+4. As seen from these observations, we can note that **optimizations implemented by compilers are quite effective and can be measured** – `-Ofast` decreases number of instructions by 21% (3 instructions) relative to `-O1` for this particular task
 
 5. The key lesson that should be learned is how to read and understand the results of compilation **into assembly output** since this is a fundamental part of developing for VLSI / RISC-V architecture
 ---
