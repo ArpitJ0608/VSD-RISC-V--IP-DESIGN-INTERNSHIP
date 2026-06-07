@@ -32,30 +32,30 @@
 
 ## Task Overview
 
-This task is the extended version of Task 1 with two major additions:
+This task is the extended version of Task 1 with the following important additions:
 
-1. **SPIKE simulation** — run RISC-V ELF binaries on the Spike ISA simulator using the proxy kernel (`pk`), confirming that cross-compiled binaries produce the same correct output as native GCC
-2. **Custom C application Example(Factorial)** — write `nfact.c` to compute factorial of N using gcc and spike, cross-compile with `-O1` and `-Ofast`, inspect assembly via `objdump`, and debug step-by-step using Spike's interactive debugger (`spike -d`)
+1. **SPIKE simulation** of RISC-V ELF binaries in the Spike ISA simulator with the help of proxy kernel ("pk"), ensuring that cross-compiled binaries work as expected and generate the same output as the native GCC
+2. **Development of Custom C program (Factorial)** by writing `nfact.c` and computing the factorial of N by using gcc and spike, cross-compiling using `-O1` and `-Ofast`, viewing assembly by using `objdump`, and debugging the process with spike interactive debugger (`spike -d`)
 
-Both `sum1ton.c` and `nfact.c` go through the complete workflow:
+Steps followed by both `sum1ton.c` and `nfact.c` are:
 
 ```
-Write C → gcc (host compiler) → riscv-gcc (-O1 / -Ofast) → objdump → spike pk → spike -d
+C Code Write → gcc → riscv-gcc (-O1 / -Ofast) → objdump → spike pk → spike -d
 ```
 
 ---
 
 ## Tools & Environment
 
-| Tool | Purpose |
-|------|---------|
-| `gedit` | GUI text editor to edit C source files and texts |
-| `gcc` | Host GCC compiler (x86) for initial verificaton |
-| `riscv64-unknown-elf-gcc` | RISC-V 64-bit cross-compiler |
-| `riscv64-unknown-elf-objdump` | RISC-V disassembler to inspect generated assembly |
-| `spike pk` | Spike RISC-V ISA simulator + proxy kernel — runs RISC-V ELF binaries |
-| `spike -d pk` | Spike in **debug mode** — single-step, inspect registers/memory |
-| `less` | Pager for minimizing long `objdump` output |
+| Tool | Description |
+|------|-------------|
+| `gedit` | GUI text editor used for editing C source code and text files |
+| `gcc` | Host GCC Compiler (x86) for preliminary verification |
+| `riscv64-unknown-elf-gcc` | RISC-V 64-bit Cross Compiler |
+| `riscv64-unknown-elf-objdump` | RISC-V Disassembler used for viewing assembly instructions |
+| `spike pk` | Spike RISC-V Instruction Set Architecture Simulator with Proxy Kernel – runs RISC-V ELF binaries |
+| `spike -d pk` | Spike in **Debug Mode** (single step, register inspection, memory dump) |
+| `less` | Page viewer used for compacting `objdump` outputs |
 
 **Working Directory:** `/workspaces/vsd-riscv2/samples`
 
@@ -125,12 +125,11 @@ riscv64-unknown-elf-gcc -Ofast -mabi=lp64 -march=rv64i -o sum1ton.o sum1ton.c
 spike pk sum1ton.o
 ```
 
-| Command Part | Explanation |
-|---|---|
-| `spike` | The Spike RISC-V ISA simulator — simulates a complete RV64I core in software |
-| `pk` | Proxy Kernel — a minimal OS shim that handles syscalls (like `printf`) so  ELF binaries can run |
-| `sum1ton.o` | The RISC-V ELF binary to simulate |
-
+|Command| Description|
+|------|------------|
+|`spike`| SPIKE is a simulator for RISC-V instructions set architecture(RISCV) that provides hardware support for RV64I|
+|`pk`| The proxy kernel is an OS wrapper that takes care of system calls such as `printf` and hence helps in running the elf binary|
+|`sum1ton.o`| The RISCV ELF Binary that is being simulated|
 **Output:** `bbl loader` then `Sum from 1 to 100 is 5050` (matches GCC output exactly)
 
 > `riscv_result-n100_spike.png` – Spike simulation output: Sum from 1 to 100 is 5050
@@ -231,26 +230,24 @@ Count  = 48 ÷ 4 = 12 instructions
 ```bash
 spike -d pk sum1ton.o
 (spike) until pc 0 10184     # Auto run till 10184 to start of main
-(spike) reg 0 sp             # inspect stack pointer register
-(spike) [Enter]              # execute next instruction
+(spike) reg 0 sp             # Inspect stack pointer register
+(spike) [Enter]              # Run next instruction
 (spike) reg 0 a5             # inspect a5 after li a5,100
 ```
 
-| Debugger Command | Explanation |
-|---|---|
-| `spike -d pk sum1ton.o` | Start Spike in interactive debug mode |
-| `until pc 0 10184` | Auto-Run silently until program counter of core 0 reaches address `0x10184` (start of `main`) |
-| `reg 0 sp` | Read the value of register `sp` on core 0 |
-| `reg 0 a5` | Read the value of register `a5` on core 0 |
-| `mem 0 7f7e9b48` | Read memory at address `0x7f7e9b48` on core 0 |
-| `[Enter]` | Single-step: execute one instruction and show next |
+| Debugger Command | Description |
+|------------------|-------------|
+| `spike -d pk sum1ton.o` | Load Spike in interactive debugging mode |
+| `until pc 0 10184` | Silent Auto-Run until program counter of core 0 is at address `0x10184` (start of `main`) |
+| `reg 0 sp` | Get value of register `sp` for core 0 |
+| `reg 0 a5` | Get value of register `a5` for core 0 |
+| `mem 0 7f7e9b48` | Get value of memory cell at address `0x7f7e9b48` for core 0 |
+| `[Enter]` | Step over: run single instruction and move to next |
 
-**Key observations from debugger:**
-- After `addi sp,sp,-16`: `sp` changes from `0x7f7e9b50` → `0x7f7e9b40` (decremented by 16)
-- After `li a5,100`: `a5 = 0x0000000000000064` (100 in hex)
-- After `addiw a5,a5,-1`: `a5 = 0x0000000000000063` (99 — the loop is counting down)
-- `bnez a5, pc-4`: branche back, confirming the loop runs 100 times
-
+**Debugger findings:**
+- `after addi sp,sp,-16`: register `sp` gets changed from `0x7f7e9b50` → `0x7f7e9b40` (value is decremented by 16)
+- `after li a5,100`: value of register `a5 = 0x0000000000000064` (decimal 100)
+- `after addiw a5,a5,-1`: value of register `a5 =
 > `debugger_o1.png` – Spike `-d` debugger stepping through sum1ton `-O1`
 
 ![Sum Debugger O1](debugger_o1.png)
@@ -398,7 +395,7 @@ Count  = 44 ÷ 4 = 11 instructions
 | `101a8` | `01010113` | `addi sp,sp,16` | Deallocate stack frame |
 | `101ac` | `00008067` | `ret` | Return to caller |
 
-**Key insight:** Even at `-O1`, the compiler performs **constant folding** — it knows `n=5` is a compile-time constant, evaluates `5! = 120` at compile time, and directly emits `li a2,120`. The entire `for` loop is gone even at `-O1`!
+**Key insight:** Even at `-O1`, the compiler does **constant folding**. It knows that `n=5` is a compile-time constant and calculates `5!=120` during compilation, thus generating code `li a2,120`. The whole `for` loop disappears even at `-O1`!
 
 > `objdump_fact_o1.png` – Full objdump of nfact compiled with `-O1`
 
@@ -419,13 +416,13 @@ From the objdump screenshot:
 
 ```
 <main>            starts at : 0x100b0
-<register_fini>   starts at : 0x100dc   ← first instruction of next function
+<register_fini>   starts at : 0x100dc   
 
 Bytes  = 0x100dc − 0x100b0 = 0x2c = 44 decimal
 Count  = 44 ÷ 4 = 11 instructions
 ```
 
-> **`nfact` with `-Ofast` uses 11 instructions in `main`** — same as `-O1`!
+> **`nfact` with `-Ofast` uses 11 instructions in `main`**
 
 #### Instruction-by-Instruction Walkthrough
 
@@ -443,7 +440,7 @@ Count  = 44 ÷ 4 = 11 instructions
 | `100d4` | `01010113` | `addi sp,sp,16` | Deallocate stack frame |
 | `100d8` | `00008067` | `ret` | Return to caller |
 
-**Key insight:** `-Ofast` produces the **same 11 instructions** as `-O1` for the factorial program — because `-O1` already eliminated the loop via constant folding. The only difference is **instruction ordering**: `-Ofast` reorders `lui a0` and `sd ra` earlier for better pipeline utilization.
+**The key point is that** `-Ofast` generates **the exact same 11 instructions** as `-O1`, due to the optimization performed by `-O1` using constant folding, which eliminates the loop. The only difference lies in the order of instruction execution**, where `-Ofast` rearranges `lui a0` and `sd ra`.
 
 > `objdump_fact_ofast.png` – Full objdump of nfact compiled with `-Ofast`
 
@@ -451,7 +448,7 @@ Count  = 44 ÷ 4 = 11 instructions
 
 ---
 
-### Part B: SPIKE Debugger Walkthrough
+### Part B: SPIKE Debugger
 
 ```bash
 # Debug with -O1 binary (run from start of main)
@@ -473,16 +470,14 @@ spike -d pk nfact.o
 (spike) reg 0 sp
 ```
 
-**Register values observed in debugger (`-O1` run):**
+**Observed register values in debugger (`-O1`):**
 
-| After Instruction | Register | Value | Meaning |
-|---|---|---|---|
-| `addi sp,sp,-16` | `sp` | `0x7f7e9b40` | Stack pointer decremented by 16 |
-| `sd ra,8(sp)` | `mem[sp+8]` | `0x000...0100fc` | Return address saved to stack |
-| `li a2,120` | `a2` | `0x0000000000000078` | `0x78 = 120 = 5!` |
-| `li a1,5` | `a1` | `0x0000000000000005` | `n = 5` |
-| `lui a0,0x21` | `a0` | `0x0000000000021000` | Upper bits of printf format string |
-| `addi a0,a0,384` | `a0` | `0x0000000000021180` | Complete format string address |
+| After Instruction      | Register | Value                   | Meaning                                    |
+|-----------------------|----------|-------------------------|-------------------------------------------|
+| `addi sp,sp,-16`      | `sp`     | `0x7f7e9b40`           | Stack pointer decremented by 16           |
+| `sd ra,8(sp)`         | `mem[sp+8]` | `0x000...0100fc`     | Saved return address                      |
+| `li a2,120`          | `a2`     | `0x0000000000000078`   | `0x78 = 120 = 5!`                        |
+| `li a1,5`            | `a1`     | `0x0000
 
 > `debugger_fact_o1.png` – Spike `-d` debugger stepping through factorial `-O1`, showing `li a2,120` and register values
 
@@ -531,6 +526,8 @@ nfact   -Ofast: 0x100dc − 0x100b0 = 0x2c  = 44  bytes → 44 ÷ 4 = 11 instruc
 
 | Image File | Description |
 |-----------|-------------|
+| File Name | Description |
+| --- | --- |
 | `sum-1ton_c-code.png` | `sum1ton.c` source code in gedit (n=100) |
 | `result-1_sum.png` | GCC compile+run for sum1ton: output 5050 |
 | `objdump_sum_o1_cmd.png` | Terminal: RISC-V compile + objdump command for sum1ton `-O1` |
@@ -556,47 +553,43 @@ nfact   -Ofast: 0x100dc − 0x100b0 = 0x2c  = 44  bytes → 44 ÷ 4 = 11 instruc
 
 ## Learnings
 
-### 1. What is SPIKE and the Proxy Kernel?
-**SPIKE** is a RISC-V ISA reference simulation tool. The Spike simulation environment runs a fully simulated RISC-V 64-bit processor. RISC-V executable binaries are not native to the x86 processor architecture and need the Spike environment to execute.
+### 1. What Is SPIKE and Proxy Kernel?
+**SPIKE** is a simulator tool that simulates RISC-V ISA references.  Spike is a simulator that emulates a full 64-bit RISC-V processor. RISC-V binary files do not work natively on the x86 architecture, so Spike is required to run them.
 
-**Proxy Kernel (`pk`)** is a minimal operating system that deals with system calls (`write`, for example, invoked internally by `printf`) by passing them to the underlying host operating system. Otherwise, the bare metal code will fail when trying to print since there is no operating system to handle the call.
+The **Proxy Kernel (pk)** is a simple operating system that handles system calls like write (which is internally called by printf ) and forwards the call to the underlying operating system of the host machine. Otherwise the bare metal code will not work properly because there is no operating system to handle the print call.
 
 ```
-[Your C Program] -> printf() -> syscall -> pk captures -> pass to host Linux -> prints
+[Your C Program] --> printf() --> syscall --> pk catches --> calls on host Linux --> prints
 ```
 
-### 2. How Spike `-d` (Debugger Mode) Works
-The `-d` command initiates the Spike environment into a mode where it works as an **interactive debugger** much like GDB but for the RISC-V simulation environment:
+### 2. Functioning of Spike `-d` (Debugger Mode)
+The `-d` flag invokes Spike into a state wherein it acts as an **interactive debugger** similar to GDB but for the RISC-V simulation environment:
 
-| Command | Description |
-| --- | --- |
-| `until pc 0 ADDR` | Execute silently until PC of core 0 is `ADDR` |
-| `reg 0 REGNAME` | Display the value in register `REGNAME` of core 0 |
-| `mem 0 ADDR` | Display the contents of memory `ADDR` of core 0 (8 bytes) |
-| `[enter]` | Execute just one instruction then display the next one |
-| `q` | Quit debugging |
+| Command         | Functionality                                       |
+| --------------- | -------------------------------------------------- |
+| `until pc 0 ADDR`     | Executes without printing until the PC of core 0 reaches `ADDR` |
+| `reg 0 REGNAME`       | Shows the value in the register `REGNAME` of core 0         |
+| `mem 0 ADDR`          | Prints memory contents `ADDR` of core 0 (8 bytes)            |
+| `[Enter key]`         | Executes an instruction, prints next one                    |
+| `q`                   | Quit debugger mode                                  |
 
-Using this, one can get an insight into how every register and every byte in memory changes upon execution of every instruction.
+### 3. Constant Folding in Factorial Program
+We can see that in the factorial program **constant folding** takes place because both `n=5` and `fact=1` are constants at compile time, thus, the whole loop can be evaluated by the compiler at compile time, therefore, it gives:
+``` fact = 1 * 5 * 4 * 3 * 2 * 1 = 120 ```
+Thus output is just a single line of code i.e. `li a2,120`, so there is no difference in the number of `nfact` instructions between `-O1` and `-Ofast` (11).
 
-### 3. Constant Folding in the Factorial Program
-The example of **constant folding** can be observed in the factorial program. Since both `n=5` and `fact=1` are compile-time constants, the compiler evaluates the entire loop **at compile time**, thus yielding:
-```
-fact = 1 × 5 × 4 × 3 × 2 × 1 = 120
-```
-Consequently, the output is just one line of code – `li a2,120`. Hence, there is no difference between `-O1` and `-Ofast` regarding `nfact` instruction count (11).
+### 4. Why Does `sum1ton` Produce a Loop But `nfact` Doesn’t?
+- `sum1ton -O1`: In spite of the compiler preserving the loop, which contains two instructions (`addiw` and `bnez`), it still succeeds in computing the constant. It is strange because the loop is executed, but it doesn't influence the number to be printed (`li a2,5050`); nevertheless, at `-Ofast`, the compiler succeeds in eliminating the loop
+- `nfact -O1`: As far as the computation is concerned, it involves multiplying constants; accordingly, constant folding takes place much more extensively compared to the previous case; accordingly, the loop can be eliminated by `-O1` optimization level
+- Thus, it becomes obvious that **optimization depends on computations being performed**
 
-### 4. Why Does `sum1ton` Yield a Loop but `nfact` Does Not?
-- `sum1ton -O1`: Even though the compiler retains the loop, consisting of two instructions (`addiw` and `bnez`), it still manages to compute the constant. This appears strange, as the loop does run, yet it does not affect the number that gets printed (`li a2,5050`). When using `-Ofast`, the compiler manages to eliminate the loop completely
-- `nfact -O1`: Since the computation involves constant multiplication, constant folding is applied more extensively than in the previous example; hence, the compiler eliminates the loop even at `-O1`
-- Therefore, it can be seen that **optimizations depend on the computation performed**
-
-### 5. Instruction Reordering by `-Ofast`
-By comparing the use of `-O1` and `-Ofast` optimizations in identical source codes, `-Ofast` performs **instruction reordering** to optimize the pipeline efficiency:
-- Under `-O1`, `addi sp,sp,-16` (stack pointer adjustment) happens first, followed by `sd ra,8(sp)` (ra register storage)
-- Under `-Ofast`, `-Ofast` places independent instructions such as `lui a0,0x21` before stack pointer adjustment, so that the loading/storing pipeline is not stalled waiting for the completion of stack pointer adjustment 
+### 5. Instruction Reordering via `-Ofast`
+By comparing instruction optimizations using `-O1` and `-Ofast`, `-Ofast` applies the technique known as **instruction reordering** to increase the efficiency of the pipeline:
+- With `-O1`, `addi sp,sp,-16` (adjusting the stack pointer) comes first, and then `sd ra,8(sp)` (storing of the ra register)
+- However, when `-Ofast` is applied, `-Ofast` puts an independent instruction `lui a0,0x21` ahead of adjusting the stack pointer to prevent the loading/storing pipeline from being stalled by the process
 
 ### 6. `bbl loader` Message
-Each Spike + pk execution is preceded by a `bbl loader` message. This message comes from the **Berkeley Boot Loader** which is simply informing you that it is starting up as part of the Spike initialization sequence.
+The `bbl loader` message comes at the start of each Spike + pk program run. The source of this message is none other than the **Berkeley Boot Loader**, announcing its activation in Spike's setup process.
 ### 7. Verification: Host GCC vs. SPIKE Must Match
 A critical check is that the output of `gcc` on the host must equal the output of `spike pk` on the RISC-V binary:
 
@@ -611,22 +604,21 @@ A critical check is that the output of `gcc` on the host must equal the output o
 
 ## Conclusion
 
-Task 2 successfully demonstrated the complete RISC-V simulation and debugging workflow using the Spike ISA simulator.
+Task 2 illustrated how to completely simulate and debug RISC-V program using Spike ISA simulator.
 
 ### What Was Accomplished
 
 **For `sum1ton.c` (Spike):**
-- RISC-V binary verified to be correct by executing `spike pk sum1ton.o`; output `5050` for n=100 and `1275` for n=50, the same as GCC
-- Address calculations verified: `-O1` results in **15 instructions**, `-Ofast` gives **12 instructions** (20% less than `-O1`)
-- Verified through `spike -d`, with values in registers `a5` decrementing from `100 -> 99 -> ... -> 0`
+- Correctness of RISC-V binary proven by `spike pk sum1ton.o`, which showed `5050` when n=100 and `1275` when n=50, similar to GCC
+- Addressing proved by checking number of instructions: **15 instructions** for `-O1`, and **12 instructions** (20% less than `-O1`) for `-Ofast`
+- Checked with `spike -d`, addresses of numbers in register `a5` shown: `100 -> 99 ->...-> 0`
 
 **For `nfact.c` (custom application):**
-- Factorials of 5 and 10 = 120 and 3628800 are verified in GCC and Spike respectively
-- Address calculations confirmed: `-O1` and `-Ofast` result in **11 instructions**
-- Factoring loop eliminated entirely using **constant folding**, even at `-O1` optimization level
-- No other difference other than instruction scheduling between `-O1` and `-Ofast` outputs
-- Verified in debugger, where `li a2,120` results in `0x78 = 120` loaded
-
+- Factorials of 5 and 10 equal 120 and 3628800 respectively confirmed in both GCC and Spike simulators
+- Addressing confirmed by checking number of instructions: `-O1` and `-Ofast` produce **11 instructions** each
+- Factoring loop removed by implementing **constant folding** technique, even under `-O1` optimization flag
+- Only difference is scheduling of operations; `-O1` and `-Ofast` produce the same output
+- Confirmed by debugging, where `li a2,120` leads to `0x78` which equals `1
 ### Final Instruction Count Summary
 
 ```
