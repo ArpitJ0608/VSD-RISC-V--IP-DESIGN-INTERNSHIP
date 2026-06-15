@@ -219,7 +219,7 @@ int main(){
 
 > `C_code_n20_sum1ton_c.png` — `sum1ton.c` with `n=20` open in gedit editor
 
-![sum1ton.c with n=20](C_code_n20_sum1ton_c.png)
+![sum1ton.c with n=20](C_code_n20_sum1ton.png)
 
 ### Commands run
 
