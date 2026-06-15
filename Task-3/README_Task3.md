@@ -49,7 +49,7 @@ Files present:
 
 > `gcc_sum1ton_o_verification.png` — `ls -ltr` output showing `sum1ton.o` (137976 bytes) after compilation
 
-![Directory showing sum1ton.o](gcc_sum1ton_o_verification.png)
+![Directory showing sum1ton.o](gcc_sum1ton.o_verification.png)
 
 ---
 
@@ -76,7 +76,7 @@ RISC-V reference program ran successfully — matches expected output from the r
 
 > `RISCV_reference_n9_sum1ton.png` — RISC-V compile + Spike run: `Sum from 1 to 9 is 45`
 
-![RISC-V reference run n=9](RISCV_reference_n9_sum1ton.png)
+![RISC-V reference run n=9](RISCV_reference n9_sum1ton.png)
 
 > `riscv_compilation_output.png` — VS Code (git hub) terminal showing Step 4 from vsd-riscv2 README with compile command and `Sum from 1 to 9 is 45` which is the output
 
