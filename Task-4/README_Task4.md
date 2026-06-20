@@ -459,7 +459,7 @@ icepack -s SOC.asc SOC.bin
 
 > `timing_sim.png` — Final `icetime` timing estimate (15.81 MHz) and `icepack` generating the final `SOC.bin` bitstream, ready to flash
 
-![timing and bitstream generation](timing sim.png)
+![timing and bitstream generation](timing_sim.png)
 
 This proves that the GPIO-enabled SoC is **completely synthesizable, routable, and timing clean**, and therefore suitable for hardware programming, although the actual hardware flashing process was not carried out during this optional step.
 
