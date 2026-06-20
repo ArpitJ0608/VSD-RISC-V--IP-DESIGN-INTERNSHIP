@@ -27,6 +27,7 @@ For execution of RISC-V Reference Program and analysis of software to hardware e
 For analysis of VSDFPGA Lab structure, Memory, Memory Mapped IOs, and concepts of FPGA IP.
 
 ## Task 4
+
 ## Objective
 
 Designing and incorporating a customized memory-mapped GPIO IP core into the current RISC-V SoC.
