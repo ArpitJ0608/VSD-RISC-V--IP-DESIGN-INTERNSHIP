@@ -182,7 +182,7 @@ A new `localparam IO_GPIO_bit = 3` was introduced to complement the current 1-ho
 
 > `GPIO_IP_Write_logic.png` — `riscv.v` showing the new `IO_GPIO_bit` localparam and `gpio_write` enable signal.
 
-![GPIO write enable logic](GPIO_IP_Write_logic.png)
+![GPIO write enable logic](GPIO_IP_Write logic.png)
 
 ### IP instantiation and read multiplexer
 
@@ -459,7 +459,7 @@ icepack -s SOC.asc SOC.bin
 
 > `timing_sim.png` — Final `icetime` timing estimate (15.81 MHz) and `icepack` generating the final `SOC.bin` bitstream, ready to flash
 
-![icetime timing and icepack bitstream generation](timing_sim.png)
+![timing and bitstream generation](timing sim.png)
 
 This proves that the GPIO-enabled SoC is **completely synthesizable, routable, and timing clean**, and therefore suitable for hardware programming, although the actual hardware flashing process was not carried out during this optional step.
 
