@@ -182,7 +182,7 @@ A new `localparam IO_GPIO_bit = 3` was introduced to complement the current 1-ho
 
 > `GPIO_IP_Write_logic.png` — `riscv.v` showing the new `IO_GPIO_bit` localparam and `gpio_write` enable signal.
 
-![GPIO write enable logic](GPIO_IP_Write logic.png)
+![GPIO write enable logic](GPIO_IP_Write_logic.png)
 
 ### IP instantiation and read multiplexer
 
@@ -217,7 +217,7 @@ The `gpio_ip` is instanced as `GPIO` and its `.write_en(gpio_write)` and `.w_dat
 
 > `GPIO_IP_SOC__Instantiation.png` — `riscv.v` showing the `gpio_ip GPIO(...)` instantiation, the existing UART instantiation, and the `IO_rdata` read multiplexer that now includes the GPIO branch
 
-![GPIO IP instantiated in SoC](GPIO_IP_SOC__Instantiation.png)
+![GPIO IP instantiated in SoC](GPIO_IP_SOC_Instantiation.png)
 
 ### SoC top-level module (overall context)
 
