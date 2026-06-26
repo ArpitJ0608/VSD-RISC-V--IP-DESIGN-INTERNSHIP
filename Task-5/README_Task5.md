@@ -9,10 +9,10 @@ This project enhances the existing single register GPIO IP of Task-2 by creating
 1. [Objective](#objective)
 2. [What Changed from Previous Task](#what-changed-from-task-2)
 3. [Register Map](#register-map)
-4. [Planning & Address Offset Design](#step-1--planning--address-offset-design)
-5. [Multi-Register GPIO IP RTL](#step-2--multi-register-gpio-ip-rtl)
-6. [SoC Integration Updates](#step-3--soc-integration-updates)
-7. [Firmware Validation](#step-4--firmware-validation)
+4. [Planning & Address Offset Design](#planning--address-offset-design)
+5. [Multi-Register GPIO IP RTL](#multi-register-gpio-ip-rtl)
+6. [SoC Integration Updates](#soc-integration-updates)
+7. [Firmware Validation](#firmware-validation)
 8. [How Address Offsets Are Decoded](#how-address-offsets-are-decoded)
 9. [How Direction Affects Behavior](#how-direction-affects-behavior)
 10. [Screenshots Index](#screenshots-index)
@@ -65,7 +65,7 @@ Byte offset 40 = word address 10 → mem_wordaddr[1:0] = 2'b10 → GPIO_READ
 
 ---
 
-## Step 1 – Planning & Address Offset Design
+## Planning & Address Offset Design
 
 Design Decisions Before Writing RTL Based on the Review of the Task-2 GPIO IP
 
@@ -100,7 +100,7 @@ Three new definitions have replaced the one definition of `IO_GPIO = 32` provide
 
 ---
 
-## Step 2 – Multi-Register GPIO IP RTL
+## Multi-Register GPIO IP RTL
 
 ### Complete `gpio_ip.v`
 
@@ -211,7 +211,7 @@ This is a combinational module (`always @(*)`) and is asynchronous in nature; th
 
 ---
 
-## Step 3 – SoC Integration Updates
+## SoC Integration Updates
 
 ### New wires and `addr_off` decode in `riscv.v`
 
@@ -280,7 +280,7 @@ No modifications were necessary for the highest level `SOC` interface module and
 
 ---
 
-## Step 4 – Firmware Validation
+## Firmware Validation
 
 ### Test firmware (`test_gpio.c`)
 
@@ -433,7 +433,7 @@ PASS
 
 *(Explanation)*
 
-The GPIO IP core employs a 2-bit bus called `addr_off`, which is formed from the 2 least significant bits of the word address in the SoC (`mem_wordaddr[1:0] = mem_addr[3:2]`). Since the GPIO registers occupy consecutive word addresses inside the IO space, each register adds 1 to `mem_wordaddr[1:0]`:
+The GPIO IP core uses a 2-bit bus called `addr_off`, which is formed from the 2 least significant bits of the word address in the SoC (`mem_wordaddr[1:0] = mem_addr[3:2]`). Since the GPIO registers occupy consecutive word addresses inside the IO space, each register adds 1 to `mem_wordaddr[1:0]`:
 
 ```
 IO_GPIO_DATA  at byte offset 32 → word address bits [1:0] = 2'b00 → selects gpio_data
