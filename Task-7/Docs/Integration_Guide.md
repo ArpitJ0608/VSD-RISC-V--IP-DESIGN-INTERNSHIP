@@ -88,7 +88,7 @@ assign spi_write = spi_sel & mem_wstrb;
 
 > `spi_variable_riscv.png` — new SPI wires and `spi_sel` / `spi_write` decode logic
 
-![SPI wires and address decode](Task-6/spi_variable_riscv.png)
+![SPI wires and address decode](/Task-6/spi_variable_riscv.png)
 
 **Why this works:** The signal `spi_sel` asserts a 4-word (16-byte) address window based on the top 2 bits of the word address, irrespective of the 1-bit decode used for the GPIO/UART. The `addr_off` (same 2-bit bus used by the GPIO) is repurposed in this case for the `spi_master`.
 
