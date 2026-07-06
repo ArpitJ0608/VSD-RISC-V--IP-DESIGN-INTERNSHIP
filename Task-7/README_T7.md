@@ -46,8 +46,7 @@ This IP has been designed, implemented and simulated through all phases of verif
 | Bus protocol | Same `write_en` / `addr_off` / `w_data` / `r_data` convention as the existing GPIO IP |
 | Verification | 3 independent loopback transfers (`0xA5`, `0xFA`, `0xBE`), all `PASS` |
 
-**Known limitation:** single-channel, single-byte-per-transaction, no interrupt, no multi-slave chip-select decoding, no DMA. See [`docs/Validation.md`](docs/Validation.md) and [`docs/IP_User_Guide.md`](docs/IP_User_Guide.md) for full details.
-
+**Known limitation**: single-channel, single-byte-per-transaction, no interrupt, no multi-slave chip-select decoding, no DMA. 
 ---
 
 ## Repository Structure
