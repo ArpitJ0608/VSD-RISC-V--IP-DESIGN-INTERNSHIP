@@ -34,9 +34,9 @@ You only need to instantiate `spi_master` at the SoC level — `spi_clk_div` and
 > `spi_clk_div_code.png` — full source of `spi_clk_div.v`
 > `spi_shiftreg_code.png` — full source of `spi_shift.v`
 
-![spi_master.v ports & registers](../Task-6/spi_master_m1.png)
-![spi_clk_div.v](../Task-6/spi_clk_div_code.png)
-![spi_shift.v](../Task-6/spi_shiftreg_code.png)
+![spi_master.v ports & registers](/Task-6/spi_master_m1.png)
+![spi_clk_div.v](/Task-6/spi_clk_div_code.png)
+![spi_shift.v](/Task-6/spi_shiftreg_code.png)
 
 ---
 
@@ -62,7 +62,7 @@ spi_master SPI(
 
 > `spi_ip_inst_riscv.png` — `spi_master` instantiated alongside GPIO/UART in `riscv.v`
 
-![spi_master instantiation](../images/spi_ip_inst_riscv.png)
+![spi_master instantiation](/Task-6/spi_ip_inst_riscv.png)
 
 > **Important:** `.miso(spi_mosi)` above is a **simulation loopback** connection used for bring-up and self-checking tests For real hardware, `.miso(...)` must be connected to the SPI slave device's `MISO`/`SDO` line via a board pin, not tied to `MOSI`.
 
@@ -88,7 +88,7 @@ assign spi_write = spi_sel & mem_wstrb;
 
 > `spi_variable_riscv.png` — new SPI wires and `spi_sel` / `spi_write` decode logic
 
-![SPI wires and address decode](../images/spi_variable_riscv.png)
+![SPI wires and address decode](Task-6/spi_variable_riscv.png)
 
 **Why this works:** The signal `spi_sel` asserts a 4-word (16-byte) address window based on the top 2 bits of the word address, irrespective of the 1-bit decode used for the GPIO/UART. The `addr_off` (same 2-bit bus used by the GPIO) is repurposed in this case for the `spi_master`.
 
@@ -125,7 +125,7 @@ assign mem_rdata = isRAM ? RAM_rdata : IO_rdata ;
 
 > `IO_read_riscv.png` — `IO_rdata` mux extended with the `spi_sel` case
 
-![IO_rdata mux extended for SPI](../Task-6/IO_read_riscv.png)
+![IO_rdata mux extended for SPI](/Task-6/IO_read_riscv.png)
 
 Place the `spi_sel` check **first** in the priority chain (as shown above) so it takes precedence over the GPIO/UART checks whenever the SPI address window is active.
 
@@ -133,7 +133,7 @@ For reference, the overall SoC top-level module and its benchtest clock/reset ge
 
 > `Soc_top_module.png` — `module SOC(CLK, RESET, LEDS, RXD, TXD)` port list and benchtest clock/reset
 
-![SOC top-level module](../Task-6/Soc_top_module.png)
+![SOC top-level module](/Task-6/Soc_top_module.png)
 
 ---
 
@@ -188,7 +188,7 @@ Occupancy: 46%
 
 > `spi_hexgen.png` — full terminal log of `make test_spi_update`
 
-![Build log](../Task-6w/spi_hexgen.png)
+![Build log](/Task-6/spi_hexgen.png)
 
 ---
 
