@@ -98,7 +98,7 @@ All registers are 32 bits wide, word-aligned, and accessed as 32-bit CPU loads/s
 
 **Read operation:** results in `{30'b0, status_reg[1], status_reg[0]}`.
 
-**Write operation:** Only the second bit (`DONE`) can be written to by writing **write-1-to-clear**; `w_data[1] = 1` means `status_reg[1]` is cleared to `0`, and writing `0` to the second bit does nothing. The first bit (`BUSY`) is not writeable
+**Write operation:**  Only the second bit (`DONE`) can be written to by writing **write-1-to-clear**; `w_data[1] = 1` means `status_reg[1]` is cleared to `0`, and writing `0` to the second bit does nothing. The first bit (`BUSY`) is not writeable
 ---
 
 ## Word-Address Decoding
