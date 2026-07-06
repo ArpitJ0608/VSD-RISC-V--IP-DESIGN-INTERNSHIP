@@ -33,8 +33,8 @@ It runs on the VSDSquadron RISC-V system and prints its progress and result over
 > `spi_test_code1.png` — setup half of `test_spi.c` (CTRL config, TXDATA load, START trigger)
 > `spi_test_code2.png` — completion half of `test_spi.c` (STATUS polling, RXDATA read, PASS/FAIL, DONE clear)
 
-![test_spi.c part 1](../Task-6/spi_test_code1.png)
-![test_spi.c part 2](../Task-6/spi_test_code2.png)
+![test_spi.c part 1](..Task-6/spi_test_code1.png)
+![test_spi.c part 2](..Task-6/spi_test_code2.png)
 
 ---
 
