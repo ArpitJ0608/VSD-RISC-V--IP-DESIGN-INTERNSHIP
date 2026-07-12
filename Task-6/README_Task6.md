@@ -1,6 +1,6 @@
 # Task-6: Design and Integrate an SPI Master IP (Minimal, Single-Byte, Mode 0)
 
-In this project, a new memory-mapped **SPI Master** IP is introduced in the RISC-V SoC, along with the GPIO and UART peripherals that were previously defined, using the standard scheme of "one IP, one owner, one register window."
+In the project, the novel memory-mapped **SPI Master** IP is added to the RISC-V SoC, alongside the GPIO and UART IPs which have already been defined before, through the conventional approach of “one IP, one owner, one register window.”
 
 ---
 
@@ -9,15 +9,16 @@ In this project, a new memory-mapped **SPI Master** IP is introduced in the RISC
 1. [Objective](#objective)
 2. [What This IP Adds to the SoC](#what-this-ip-adds-to-the-soc)
 3. [Register Map](#register-map)
-4. [Planning & Address Offset Design](#planning--address-offset-design)
-5. [SPI Master IP RTL](#spi-master-ip-rtl)
-6. [SoC Integration Updates](#soc-integration-updates)
-7. [Firmware Validation](#firmware-validation)
-8. [How Address Offsets Are Decoded](#how-address-offsets-are-decoded)
-9. [How a Transfer Actually Happens (Data Flow)](#how-a-transfer-actually-happens-data-flow)
-10. [Screenshots Index](#screenshots-index)
-11. [Learnings](#learnings)
-12. [Conclusion](#conclusion)
+4. [Planning & Address Offset Design](#step-1--planning--address-offset-design)
+5. [SPI Master IP RTL](#step-2--spi-master-ip-rtl)
+6. [SoC Integration Updates](#step-3--soc-integration-updates)
+7. [Firmware Validation](#step-4--firmware-validation)
+8. [Hardware Validation (VSDSquadron FPGA)](#step-5--hardware-validation-vsdsquadron-fpga)
+9. [How Address Offsets Are Decoded](#how-address-offsets-are-decoded)
+10. [How a Transfer Actually Happens (Data Flow)](#how-a-transfer-actually-happens-data-flow)
+11. [Screenshots Index](#screenshots-index)
+12. [Learnings](#learnings)
+13. [Conclusion](#conclusion)
 
 ---
 
@@ -103,7 +104,7 @@ Four new definitions were appended after the existing GPIO offsets. Each is 4 by
 
 > `spi_io_module.png` — `io.h` with the SPI register offsets (48, 52, 56, 60) added alongside the existing GPIO/UART map
 
-![io.h with SPI offsets](spi_io_module.png)
+![io.h with SPI offsets](images/spi_io_module.png)
 
 ---
 
@@ -288,11 +289,11 @@ endmodule
 > `spi_master_m4.png` – Combinational output logic (`busy`, `cs_n`, `load`, `shift_en`)
 > `spi_master_m5.png` – Register write decode and read-back multiplexer
 
-![spi_master.v part 1 — ports & registers](spi_master_m1.png)
-![spi_master.v part 2 — sub-modules & bit counter](spi_master_m2.png)
-![spi_master.v part 3 — FSM sequential logic](spi_master_m3.png)
-![spi_master.v part 4 — combinational outputs](spi_master_m4.png)
-![spi_master.v part 5 — register writes & read mux](spi_master_m5.png)
+![spi_master.v part 1 — ports & registers](images/spi_master_m1.png)
+![spi_master.v part 2 — sub-modules & bit counter](images/spi_master_m2.png)
+![spi_master.v part 3 — FSM sequential logic](images/spi_master_m3.png)
+![spi_master.v part 4 — combinational outputs](images/spi_master_m4.png)
+![spi_master.v part 5 — register writes & read mux](images/spi_master_m5.png)
 
 ### Detailed Code Explanation
 
@@ -380,7 +381,7 @@ endmodule
 
 > `spi_clk_div_code.png` — Complete clock-divider RTL
 
-![spi_clk_div.v](spi_clk_div_code.png)
+![spi_clk_div.v](images/spi_clk_div_code.png)
 
 **How it works:** while `enable=1`, `counter` counts system-clock cycles. When it reaches `clk_div`, the counter resets to 0, `spi_clk` **toggles**, and `tick` pulses for exactly one cycle. So `spi_clk` flips every `(clk_div + 1)` system-clock cycles — matching the spec's `SCLK toggles every (CLKDIV+1) cycles`. When `enable=0`, both `counter` and `spi_clk` are forced to 0, so SCLK idles **low** between transfers, correct for Mode 0 (CPOL = 0).
 
@@ -425,7 +426,7 @@ endmodule
 
 > `spi_shiftreg_code.png` — Complete shift-register RTL
 
-![spi_shift.v](spi_shiftreg_code.png)
+![spi_shift.v](images/spi_shiftreg_code.png)
 
 **How it works:** on `load`, `shift_tx` is loaded from `tx_data` (`shift_rx` cleared). On every `shift_en` pulse, `shift_tx` shifts **left** by one, pushing a `0` in at the bottom, while its **MSB (`shift_tx[7]`)** is continuously driven onto `mosi` — this gives MSB-first transmission. Simultaneously, `shift_rx` shifts left and captures the current `miso` bit into its LSB, so after 8 shifts `shift_rx` (→ `rx_data`) holds the complete received byte, MSB-first as well.
 
@@ -452,7 +453,7 @@ assign spi_write  = spi_sel & mem_wstrb;
 
 > `spi_variable_riscv.png` — New SPI wires and `spi_sel`/`spi_write` address decode
 
-![riscv.v — SPI signal declarations](spi_variable_riscv.png)
+![riscv.v — SPI signal declarations](images/spi_variable_riscv.png)
 
 `spi_sel` is `1` only when the two most-significant bits of the word address (`mem_wordaddr[3]` and `mem_wordaddr[2]`) are both set — giving the SPI block its own 4-word (16-byte) decode region, separate from GPIO/UART. `addr_off` is the same 2-bit sub-selector already used for GPIO, reused here to pick between `CTRL/TXDATA/RXDATA/STATUS`.
 
@@ -474,7 +475,7 @@ spi_master SPI(
 
 > `spi_ip_inst_riscv.png` — `spi_master` instantiated alongside GPIO/UART
 
-![riscv.v — spi_master instantiation](spi_ip_inst_riscv.png)
+![riscv.v — spi_master instantiation](images/spi_ip_inst_riscv.png)
 
 For bring-up in simulation, `.miso(spi_mosi)` ties MISO directly to MOSI — a **loopback** connection. Whatever the master transmits, it immediately receives back, which turns the whole test into a simple equality check (`RXDATA == TXDATA`) with no external SPI device required.
 
@@ -492,7 +493,7 @@ assign mem_rdata = isRAM ? RAM_rdata : IO_rdata ;
 
 > `IO_read_riscv.png` — `IO_rdata` mux extended with the `spi_sel` case ahead of GPIO/UART
 
-![riscv.v — I/O read data mux](IO_read_riscv.png)
+![riscv.v — I/O read data mux](images/IO_read_riscv.png)
 
 This is the **single point of visibility** for the SPI IP: any `lw` from the SPI address window is routed to `spi_rdata`; everything else falls through unchanged to the pre-existing GPIO/UART logic — the entire integration change is small and low-risk.
 
@@ -500,7 +501,7 @@ For reference, the overall SoC top-level port list all peripherals live inside, 
 
 > `Soc_top_module.png` — `module SOC(CLK, RESET, LEDS, RXD, TXD)` and `ifdef BENCH` clock/reset
 
-![riscv.v — SOC module & testbench clock/reset](Soc_top_module.png)
+![riscv.v — SOC module & testbench clock/reset](images/Soc_top_module.png)
 
 ---
 
@@ -567,8 +568,8 @@ int main()
 > `spi_test_code1.png` — setup: CTRL config, TXDATA load, START trigger
 > `spi_test_code2.png` — polling STATUS, RXDATA read, PASS/FAIL check, DONE clear
 
-![test_spi.c part 1](spi_test_code1.png)
-![test_spi.c part 2](spi_test_code2.png)
+![test_spi.c part 1](images/spi_test_code1.png)
+![test_spi.c part 2](images/spi_test_code2.png)
 
 **Firmware sequence (matches the spec's validation checklist exactly):**
 1. Program `CLKDIV=10` and `EN=1` into `SPI_CTRL`.
@@ -603,7 +604,7 @@ The firmware compiled and linked cleanly for `rv32i`/`ilp32`, occupying 46% of B
 
 > `spi_hexgen.png` — Full terminal log of `make test_spi_update` (compile → assemble → link → hex conversion)
 
-![make test_spi_update build log](spi_hexgen.png)
+![make test_spi_update build log](images/spi_hexgen.png)
 
 ### Simulation commands
 
@@ -633,7 +634,7 @@ PASS
 
 > `spi_res1.png` — Simulation result, Test 1: `TX_VALUE=0xA5` → `RX DATA=0xA5`, PASS
 
-![Simulation result test 1](spi_res1.png)
+![Simulation result test 1](images/spi_res1.png)
 
 **Test 2 — `TX_VALUE = 0xFA`** → expected `RX DATA = 0xFA`
 
@@ -652,7 +653,7 @@ PASS
 
 > `spi_res2.png` — Simulation result, Test 2: `TX_VALUE=0xFA` → `RX DATA=0xFA`, PASS
 
-![Simulation result test 2](spi_res2.png)
+![Simulation result test 2](images/spi_res2.png)
 
 **Test 3 — `TX_VALUE = 0xBE`** → expected `RX DATA = 0xBE`
 
@@ -671,15 +672,178 @@ PASS
 
 > `spi_res3.png` — Simulation result, Test 3: `TX_VALUE=0xBE` → `RX DATA=0xBE`, PASS
 
-![Simulation result test 3](spi_res3.png)
+![Simulation result test 3](images/spi_res3.png)
 
 Across all three runs the log sequence is identical (`SPI CTRL → TX DATA → SPI START → SPI DONE → Transfer Started... → STATUS → RX DATA → PASS`), which is exactly what a correctly-designed peripheral should show: **deterministic, repeatable timing driven by the FSM and bit counter, independent of the actual data value being shifted.**
 
 ---
 
+## Step 5 – Hardware Validation (VSDSquadron FPGA)
+
+The RTL logic was already verified through simulation (step 4). The following step was to go through synthesis, placement & routing, timing and finally generating the bitstream file using the **very same `riscv.v`** (with the SPI master implementation), and programming the real **VSDSquadron FPGA** board with it.
+
+The hardware flow follows three commands, run in this order:
+
+```bash
+# 1) Rebuild firmware (same test_spi.c used in simulation)
+cd /workspaces/vsd-riscv2/samples/vsdfpga_labs/basicRISCV/Firmware
+make test_spi_update
+
+# 2) Synthesize + place & route + generate bitstream
+cd /workspaces/vsd-riscv2/samples/vsdfpga_labs/basicRISCV/RTL
+make build
+
+# 3) Flash the bitstream onto the VSDSquadron board
+sudo make flash
+```
+
+### 5.1 Synthesis (`make build` → Yosys)
+
+First, the command "`make build`" performs synthesis using Yosys of the `riscv.v` file, including the SPI Master IP core. This is verified by the successful synthesis output which clearly shows that the design fits nicely within iCE40 FPGA resources like LUTs, DFFs, carry chains, and even the BRAM needed to store the firmware.
+
+```
+Info: Packing LUT-FFs..
+Info:   1128 LCs used as LUT4 only
+Info:      63 LCs used as LUT4 and DFF
+Info: Packing non-LUT FFs..
+Info:     145 LCs used as DFF only
+Info: Packing carries..
+Info:      10 LCs used as CARRY only
+...
+Info: Device utilisation:
+Info:       ICESTORM_LC:   1351/  5280   25%
+Info:      ICESTORM_RAM:     16/    30   53%
+Info:            SB_IO:      9/    96    9%
+Info:            SB_GB:      7/     8   87%
+```
+
+Only **25% of the logic cells (1351/5280)** and **53% of the block RAM** are used, confirming there is comfortable headroom left on the FPGA even with GPIO, UART, and SPI Master all integrated together.
+
+> `synthesis.png` — Yosys/nextpnr packing log and final device-utilisation summary after adding the SPI Master IP
+
+![Synthesis / device utilisation](synthesis.png)
+
+### 5.2 Place & Route (`make build` → nextpnr routing)
+
+The same `make build` step then invokes `nextpnr-ice40` to place and route the packed netlist. The router works through **5058 arcs**, progressively reducing the "arcs with ripup" count over 50,000+ iterations until routing converges:
+
+```
+Info: Routing..
+Info: Setting up routing queue.
+Info: Routing 5058 arcs.
+Info:  IterCnt |  (re-)routed arcs   | delta | remaining |   time spent
+Info:           |  w/ripup   wo/ripup| w/r   wo/r| arcs  |batch(sec) total(sec)
+Info:     1000  |     110       889 |  110   889|  4209 |    1.16      1.16
+...
+Info:    50000  |   30415     19459 |  694    306|   546 |    1.30     36.65
+```
+
+This is just a **health check of place-and-route**; the clean, converging routing log ("remaining arcs" going down), shows that adding the SPI wiring didn't cause pathological congestion of the iCE40 fabric.
+
+> `Routing_table.png` — nextpnr routing progress log (5058 arcs) after SPI Master integration
+
+![Routing table](Routing_table.png)
+
+### 5.3 Timing Closure (`make build` → nextpnr timing report)
+
+nextpnr then reports the achievable maximum clock frequency for the `clk` domain against the design's actual requirement (12 MHz, driven by the internal `SB_HFOSC` oscillator):
+
+```
+Info: Max frequency for clock 'clk': 19.88 MHz (PASS at 12.00 MHz)
+
+Info: Max delay <async>     -> posedge clk: 10.02 ns
+Info: Max delay posedge clk -> <async>    : 14.16 ns
+```
+
+**1.65× timing margin** between the possible **19.88 MHz vs. 12 MHz needed** shows that the additional combinational logic introduced by the SPI Master implementation (decoder, FSM, and paths to compare/shift) does not introduce any critical path close to the clock frequency requirement.
+> `Timing_match.png` — nextpnr static timing report: 19.88 MHz achievable, PASS at the 12 MHz system clock
+
+![Timing report](images/Timing_match.png)
+
+### 5.4 Bitstream Generation (`icetime` + `icepack`)
+
+The last step in `make build` is to perform an independent timing verification using the command `icetime`, followed by converting the routed ASCII netlist (`SOC.asc`) to the bitstream format (`SOC.bin`) that will be loaded onto the FPGA using the `icepack` command:
+
+```
+Info: Max frequency for clock 'clk': 16.10 MHz (PASS at 12.00 MHz)
+
+Info: Program finished normally.
+icetime -p VSDSquadronFM.pcf -P sg48 -r SOC.timings -d up5k -t SOC.asc
+// Reading input .pcf file..
+// Reading input .asc file..
+// Reading 5k chipdb file..
+// Creating timing netlist..
+Warning: timing analysis not supported for cell type HFOSC
+// Timing estimate: 64.63 ns (15.47 MHz)
+icepack -s SOC.asc SOC.bin
+```
+
+The second independent check `icetime` (16.10 MHz) succeeds once more at **12 MHz**; and `icepack` generates `SOC.bin`, which will be loaded to the board in the subsequent step. (`HFOSC` warning is an expected thing and has no relation to `icetime` inability to handle the internal oscillator primitive – it doesn’t influence the timing figures above for `clk` domain).
+
+> `Bitstream_generation.png` — final `icetime` timing check (16.10 MHz, PASS at 12 MHz) and `icepack` producing `SOC.bin`
+
+![Bitstream generation](Bitstream_generation.png)
+
+### 5.5 Flashing the Bitstream (`sudo make flash`)
+
+With `SOC.bin` generated, `sudo make flash` invokes `iceprog` to erase the board's SPI flash and program the new bitstream:
+
+```
+$ sudo make flash
+iceprog SOC.bin
+init..
+cdone: high
+reset..
+cdone: low
+flash ID: 0xEF 0x40 0x16 0x00
+file size: 104090
+erase 64kB sector at 0x000000..
+erase 64kB sector at 0x010000..
+programming..
+done.
+reading..
+VERIFY OK
+cdone: high
+Bye.
+```
+
+`VERIFY OK` and `cdone: high` at the end confirm the bitstream was written and verified successfully, and the FPGA has resumed normal operation with the new configuration (GPIO + UART + SPI Master, all integrated).
+
+> `Hardware_data_transmission.png` — terminal log of `sudo make flash`: erase, program, verify, and `cdone: high` confirming a successful configuration load
+
+![Flashing the bitstream](Hardware_data_transmission.png)
+
+### 5.6 Board Bring-Up
+
+AAfter the flashing, the VSDSquadron FPGA board was powered via the USB-C connection and examined as follows:
+
+- The **PWR LED** is illuminated, indicating that the board has power.
+- The **status/user LED** is illuminated at the RGB header, meaning that the FPGA is running (the `cdone` signal is asserted as expected; it was previously observed to be `cdone: high` during flashing).
+- The board is now ready for running the tested `test_spi.c` firmware on the hardware instead of `vvp`.
+
+> `Board_output.jpeg` — VSDSquadron FPGA board powered on via USB-C, PWR LED and status LED both active after a successful flash
+
+![VSDSquadron board powered on](Board_output.jpeg)
+
+### Summary of Hardware Validation
+
+| Stage | Tool | Result |
+|-------|------|--------|
+| Synthesis | Yosys | 1351/5280 LCs (25%), 16/30 RAMs (53%) — clean packing |
+| Place & Route | nextpnr | 5058 arcs routed, converged cleanly |
+| Timing (nextpnr) | nextpnr | 19.88 MHz achievable, **PASS** at 12 MHz |
+| Timing (icetime) | icetime | 16.10 MHz achievable, **PASS** at 12 MHz |
+| Bitstream | icepack | `SOC.bin` generated successfully |
+| Flashing | iceprog | `VERIFY OK`, `cdone: high` |
+| Board bring-up | — | Board powers on, PWR + status LEDs active |
+
+This brings the process full circle from **RTL to Simulation to Synthesis to Place & Route to Timing Closure to Bitstream to Flash to Real Hardware**, proving that the SPI Master IP is not only functional in simulation but is also successfully synthesized and timed in the real VSDSquadron FPGA.
+
+---
+
 ## How Address Offsets Are Decoded
 
-The SPI IP core uses the same 2-bit `addr_off` bus already wired for GPIO (`mem_wordaddr[1:0]`), but is only *enabled* by a different top-level select signal, `spi_sel`, formed from the two bits **above** that (`mem_wordaddr[3] & mem_wordaddr[2]`):
+The SPI IP core relies on the same 2-bit address offset bus (`addr_off`) used by GPIO (`mem_wordaddr[1:0]`); however, the core is activated through a different control signal `spi_sel` derived from two higher order bits **above** those (`mem_wordaddr[3] & mem_wordaddr[2]`).
 
 ```
 SPI_CTRL   at byte offset 48 → mem_wordaddr[1:0] = 2'b00 → selects ctrl_reg
@@ -688,24 +852,24 @@ SPI_RXDATA at byte offset 56 → mem_wordaddr[1:0] = 2'b10 → selects rx_reg (r
 SPI_STATUS at byte offset 60 → mem_wordaddr[1:0] = 2'b11 → selects status_reg (write-1-to-clear)
 ```
 
-In `riscv.v`: `spi_sel` gates whether the SPI block's `write_en` is active at all (`spi_write = spi_sel & mem_wstrb`) and whether `IO_rdata` routes through `spi_rdata`. Inside `spi_master.v`, the `case(addr_off)` blocks for write and read then pick the exact register — precisely mirroring the two-level decode structure (outer IP-select, inner register-select) used for GPIO in Task-5, just with 4 registers instead of 3.
+In file `riscv.v`: `spi_sel` decides if `write_en` of the SPI peripheral module is enabled (`spi_write = spi_sel & mem_wstrb`) and also whether the data `IO_rdata` is routed via `spi_rdata`. Within the `spi_master.v`, the `case(addr_off)` block for both write and read, picks up the particular register, i.e., replicating the two level-decoding scheme of Task-5 (IP-select followed by register select), but with 4 registers instead of 3.
 
 ---
 
 ## How a Transfer Actually Happens (Data Flow)
 
-This is the full story of one transfer, tying the RTL to the simulation log:
+This is the story of how one transfer happens and links RTL to the simulation log:
 
-1. **Configure** — CPU writes `CLKDIV=10, EN=1` to `CTRL`. FSM stays in `IDLE` since `START` (bit1) is still 0.
-2. **Load TX byte** — CPU writes the byte into `tx_reg` (does not move yet — it's just parked in a register).
-3. **Start** — CPU sets `START`. On the next clock, FSM sees `EN & START` in `IDLE` and moves `IDLE → LOAD`. In `LOAD`: `$display("SPI START")` fires, `BUSY` sets, `START` auto-clears, `cs_n` drops low, `load=1` pulses so `spi_shift` captures the byte from `tx_reg`.
-4. **Transfer (8 SCLK edges)** — FSM sits in `TRANSFER`. `spi_clk_div` toggles `spi_clk` every `CLKDIV+1` system cycles and pulses `tick`. On each `tick`, `shift_en=1` for one cycle: `shift_tx` shifts left (MSB → `mosi`), `shift_rx` shifts left capturing `miso`. Because `miso` is looped from `mosi`, the bit just sent is the bit just received. `bit_count` increments each `tick`.
-5. **Done** — the instant `bit_count==7 && tick`, FSM moves to `DONE`: `$display("SPI DONE")` fires, `BUSY` clears, `DONE` sets, and `rx_reg <= rx_data` latches the fully-shifted byte for the CPU to read. FSM returns to `IDLE`, `cs_n` goes high again.
-6. **Poll & read** — firmware's `do…while` loop exits the instant `STATUS` bit1 reads `1`. It then reads `RXDATA` and compares against the byte it sent.
-7. **Clear** — firmware writes `1` to `STATUS` bit1, clearing `DONE` and leaving the IP ready for the next transfer.
+1. **Configure** – CPU writes `CLKDIV=10, EN=1` to `CTRL`. FSM is in `IDLE` state as `START` (bit1) is still 0.
+2. **Load TX byte** – CPU loads the byte to `tx_reg` (the byte does not move now, but just waits in a register).
+3. **Start** – CPU sets `START`. On the next clock tick, FSM sees `EN & START` in `IDLE` and makes transition `IDLE -> LOAD`. In `LOAD`: `$display("SPI START")` fires, `BUSY` sets, `START` automatically clears, `cs_n` goes low, `load=1` fires and the byte is captured by `spi_shift` from `tx_reg`.
+4. **Transfer (8 SCLK edges)** – FSM stays in `TRANSFER`. `spi_clk_div` toggles `spi_clk` at every `CLKDIV + 1` system clocks and fires `tick`. With every `tick` FSM gets `shift_en = 1` for one cycle: `shift_tx` shifts the byte left (MSB -> `mosi`), `shift_rx` shifts left capturing `miso`. As `miso` is connected to `mosi`, the transmitted bit becomes the received bit. `bit_count` increases on every `tick`.
+5. **Done** — as soon as `bit_count==7 && tick`, FSM transitions into `DONE` state where `$display("SPI DONE")` prints, `BUSY` becomes inactive, `DONE` becomes active and `rx_reg <= rx_data` stores shifted byte in CPU accessible register. FSM enters `IDLE` state, `cs_n` becomes logic `1`.
+6. **Polling and read** — the loop `do… while()` ends right away once `STATUS.bit1` equals `1`. Then it reads `RXDATA` and compares it with the sent byte.
+7. **Clear** — the firmware writes `1` into `STATUS.bit1`, thus deactivating `DONE` and keeping IP ready for the next transfer.
 
-The result is a clean, fully synchronous round trip:
-**CPU register write → FSM → clock divider → shift register → MOSI → (loopback) → MISO → shift register → RXDATA → CPU register read**, verified bit-for-bit across three different data patterns.
+Conclusion. The result of this design is the full round-trip which looks like that:
+**CPU register write → FSM → clock divider → shift register → MOSI → (loopback) → MISO → shift register → RXDATA → CPU register read**, checked bit-to-bit on three different input sequences.
 
 ---
 
@@ -731,6 +895,12 @@ The result is a clean, fully synchronous round trip:
 | `spi_res1.png` | Simulation result 1: `TX_VALUE=0xA5` → `RX DATA=0xA5`, PASS |
 | `spi_res2.png` | Simulation result 2: `TX_VALUE=0xFA` → `RX DATA=0xFA`, PASS |
 | `spi_res3.png` | Simulation result 3: `TX_VALUE=0xBE` → `RX DATA=0xBE`, PASS |
+| `synthesis.png` | Yosys/nextpnr packing log and device-utilisation summary (1351/5280 LCs, 16/30 RAMs) |
+| `Routing_table.png` | nextpnr routing progress log — 5058 arcs, converging over 50,000+ iterations |
+| `Timing_match.png` | nextpnr static timing report — 19.88 MHz achievable, PASS at 12 MHz |
+| `Bitstream_generation.png` | Final `icetime` timing check (16.10 MHz, PASS) and `icepack` producing `SOC.bin` |
+| `Hardware_data_transmission.png` | Terminal log of `sudo make flash` — erase, program, `VERIFY OK`, `cdone: high` |
+| `Board_output.jpeg` | VSDSquadron FPGA board powered on via USB-C, PWR and status LEDs active |
 
 ---
 
@@ -739,15 +909,19 @@ The result is a clean, fully synchronous round trip:
 - **Dividing IP functionality between clock, shift, and control sub-modules yields benefits** — `spi_clk_div` and `spi_shift` could be thought about (and easily unit-tested), independent of each other and the state machine that controls them.
 - **Single-cycle `tick` signal is the most elegant solution for transferring data from the slow SPI clock domain into the fast system clock domain** — tying `shift_en` to `tick`, instead of directly to a toggling `spi_clk`, eliminates any potential multi-toggling glitches and ensures that all register updates happen synchronously with respect to `clk`.
 - **Auto-clearing control signals (`START`) and write-1-to-clear status signals (`DONE`) are straightforward to implement yet hard to do right** — both had to be processed together with all other registers within the same synchronous write process without any chance of a race condition between CPU write and FSM update.
-- **Loopback test (`miso = mosi`) reduces a problem of checking SPI correctness to trivial equality comparison** – no need for any separate SPI peripheral or special testbench logic to verify correctness of MOSI/MISO timing.
 - **Two-level addressing (`spi_sel` followed by `addr_off`) easily scales up to any number of registers** – utilizing the same bus structure as GPIO, but controlled with a different upper-level select signal, no extra bus structures had to be added to `riscv.v`.
-- **Verification of data shifting with several, dissimilar patterns of bytes** (`0xA5`, `0xFA`, `0xBE`) is much more convincing than verification with just one vector – all three have different number of 1s and 0s, that is what can reveal any problems with MSB/LSB ordering.
+- **Simulation passing** - only after synthesis, place & route, and timing closure on the real iCE40 fabric can we be certain that the design will actually work on hardware and not just in our perfect event-driven simulator.
+- **"Timing margin"** - being able to see both 19.88 MHz (nextpnr) and 16.10 MHz (icetime) well above 12 MHz clock rate requirement for our system makes us sure that our new additions (SPI FSM and register decode) did not silently reduce our timing margin.
+- **`VERIFY OK` after `iceprog` is the true communication with hardware** - at that point, "my RTL simulates correctly" turns to "my bitstream actually resides in the FPGA configuration memory" and `cdone: high` confirms that the FPGA actually received that configuration.
 
 ---
 
 ## Conclusion
 
 The SPI Master IP was implemented from the ground up as an entirely new, fully synchronous Mode-0 peripheral consisting of a clock divider, a shift register, and a 4-state FSM, and incorporated into the RISC-V SoC as its own peripheral with its own address decode window (`spi_sel`) right along with the rest of the GPIO and UART peripherals. It is controlled exclusively through software by four 32-bit registers (`CTRL`, `TXDATA`, `RXDATA`, `STATUS`) in a configuration -> start -> poll -> read process, without any use of interrupts.
-A series of three independently simulated transfers (`0xA5`, `0xFA`, `0xBE`) were successfully transmitted over a MISO/MOSI loopback, each one coming back identically, reporting `SPI START → SPI DONE → STATUS=0x2 → RX DATA matches → PASS`. This proves that the system satisfies every functional specification requirement: proper `CS_N` framing, proper SCLK timing based on `CLKDIV`, MSB-first bit shifting, proper `BUSY/DONE` status handling, and proper write-1-to-clear behavior.
+
+Three independent transfers of data (i.e., `0xA5`, `0xFA`, `0xBE`) were successfully transferred via MISO/MOSI loopback and received back with identical values as: `SPI START → SPI DONE → STATUS=0x2 → RX DATA matches → PASS`. It thus confirms that the current system meets all the functional specifications requirements.
+
+Moreover, in addition to simulations, the same design was implemented via the entire hardware flow process (from `make test_spi_update` → `make build` → `sudo make flash`) for **the VSDSquadron FPGA** and it synthesizes properly (logic cell utilization: 25%), routes successfully (5058 arcs converged), meets timing requirements comfortably over 12MHz system clock (19.88 MHz by nextpnr, 16.10 MHz by icetime), and flashes successfully (`VERIFY OK`, `cdone: high`).
 
 ---
