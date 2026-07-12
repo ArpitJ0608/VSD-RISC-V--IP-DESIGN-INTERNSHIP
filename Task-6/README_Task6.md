@@ -104,7 +104,7 @@ Four new definitions were appended after the existing GPIO offsets. Each is 4 by
 
 > `spi_io_module.png` — `io.h` with the SPI register offsets (48, 52, 56, 60) added alongside the existing GPIO/UART map
 
-![io.h with SPI offsets](images/spi_io_module.png)
+![io.h with SPI offsets](spi_io_module.png)
 
 ---
 
@@ -289,11 +289,11 @@ endmodule
 > `spi_master_m4.png` – Combinational output logic (`busy`, `cs_n`, `load`, `shift_en`)
 > `spi_master_m5.png` – Register write decode and read-back multiplexer
 
-![spi_master.v part 1 — ports & registers](images/spi_master_m1.png)
-![spi_master.v part 2 — sub-modules & bit counter](images/spi_master_m2.png)
-![spi_master.v part 3 — FSM sequential logic](images/spi_master_m3.png)
-![spi_master.v part 4 — combinational outputs](images/spi_master_m4.png)
-![spi_master.v part 5 — register writes & read mux](images/spi_master_m5.png)
+![spi_master.v part 1 — ports & registers]( spi_master_m1.png)
+![spi_master.v part 2 — sub-modules & bit counter]( spi_master_m2.png)
+![spi_master.v part 3 — FSM sequential logic]( spi_master_m3.png)
+![spi_master.v part 4 — combinational outputs]( spi_master_m4.png)
+![spi_master.v part 5 — register writes & read mux]( spi_master_m5.png)
 
 ### Detailed Code Explanation
 
@@ -381,7 +381,7 @@ endmodule
 
 > `spi_clk_div_code.png` — Complete clock-divider RTL
 
-![spi_clk_div.v](images/spi_clk_div_code.png)
+![spi_clk_div.v]( spi_clk_div_code.png)
 
 **How it works:** while `enable=1`, `counter` counts system-clock cycles. When it reaches `clk_div`, the counter resets to 0, `spi_clk` **toggles**, and `tick` pulses for exactly one cycle. So `spi_clk` flips every `(clk_div + 1)` system-clock cycles — matching the spec's `SCLK toggles every (CLKDIV+1) cycles`. When `enable=0`, both `counter` and `spi_clk` are forced to 0, so SCLK idles **low** between transfers, correct for Mode 0 (CPOL = 0).
 
@@ -426,7 +426,7 @@ endmodule
 
 > `spi_shiftreg_code.png` — Complete shift-register RTL
 
-![spi_shift.v](images/spi_shiftreg_code.png)
+![spi_shift.v]( spi_shiftreg_code.png)
 
 **How it works:** on `load`, `shift_tx` is loaded from `tx_data` (`shift_rx` cleared). On every `shift_en` pulse, `shift_tx` shifts **left** by one, pushing a `0` in at the bottom, while its **MSB (`shift_tx[7]`)** is continuously driven onto `mosi` — this gives MSB-first transmission. Simultaneously, `shift_rx` shifts left and captures the current `miso` bit into its LSB, so after 8 shifts `shift_rx` (→ `rx_data`) holds the complete received byte, MSB-first as well.
 
@@ -453,7 +453,7 @@ assign spi_write  = spi_sel & mem_wstrb;
 
 > `spi_variable_riscv.png` — New SPI wires and `spi_sel`/`spi_write` address decode
 
-![riscv.v — SPI signal declarations](images/spi_variable_riscv.png)
+![riscv.v — SPI signal declarations]( spi_variable_riscv.png)
 
 `spi_sel` is `1` only when the two most-significant bits of the word address (`mem_wordaddr[3]` and `mem_wordaddr[2]`) are both set — giving the SPI block its own 4-word (16-byte) decode region, separate from GPIO/UART. `addr_off` is the same 2-bit sub-selector already used for GPIO, reused here to pick between `CTRL/TXDATA/RXDATA/STATUS`.
 
@@ -475,7 +475,7 @@ spi_master SPI(
 
 > `spi_ip_inst_riscv.png` — `spi_master` instantiated alongside GPIO/UART
 
-![riscv.v — spi_master instantiation](images/spi_ip_inst_riscv.png)
+![riscv.v — spi_master instantiation]( spi_ip_inst_riscv.png)
 
 For bring-up in simulation, `.miso(spi_mosi)` ties MISO directly to MOSI — a **loopback** connection. Whatever the master transmits, it immediately receives back, which turns the whole test into a simple equality check (`RXDATA == TXDATA`) with no external SPI device required.
 
@@ -493,7 +493,7 @@ assign mem_rdata = isRAM ? RAM_rdata : IO_rdata ;
 
 > `IO_read_riscv.png` — `IO_rdata` mux extended with the `spi_sel` case ahead of GPIO/UART
 
-![riscv.v — I/O read data mux](images/IO_read_riscv.png)
+![riscv.v — I/O read data mux]( IO_read_riscv.png)
 
 This is the **single point of visibility** for the SPI IP: any `lw` from the SPI address window is routed to `spi_rdata`; everything else falls through unchanged to the pre-existing GPIO/UART logic — the entire integration change is small and low-risk.
 
@@ -501,7 +501,7 @@ For reference, the overall SoC top-level port list all peripherals live inside, 
 
 > `Soc_top_module.png` — `module SOC(CLK, RESET, LEDS, RXD, TXD)` and `ifdef BENCH` clock/reset
 
-![riscv.v — SOC module & testbench clock/reset](images/Soc_top_module.png)
+![riscv.v — SOC module & testbench clock/reset]( Soc_top_module.png)
 
 ---
 
@@ -568,8 +568,8 @@ int main()
 > `spi_test_code1.png` — setup: CTRL config, TXDATA load, START trigger
 > `spi_test_code2.png` — polling STATUS, RXDATA read, PASS/FAIL check, DONE clear
 
-![test_spi.c part 1](images/spi_test_code1.png)
-![test_spi.c part 2](images/spi_test_code2.png)
+![test_spi.c part 1]( spi_test_code1.png)
+![test_spi.c part 2]( spi_test_code2.png)
 
 **Firmware sequence (matches the spec's validation checklist exactly):**
 1. Program `CLKDIV=10` and `EN=1` into `SPI_CTRL`.
@@ -604,7 +604,7 @@ The firmware compiled and linked cleanly for `rv32i`/`ilp32`, occupying 46% of B
 
 > `spi_hexgen.png` — Full terminal log of `make test_spi_update` (compile → assemble → link → hex conversion)
 
-![make test_spi_update build log](images/spi_hexgen.png)
+![make test_spi_update build log]( spi_hexgen.png)
 
 ### Simulation commands
 
@@ -634,7 +634,7 @@ PASS
 
 > `spi_res1.png` — Simulation result, Test 1: `TX_VALUE=0xA5` → `RX DATA=0xA5`, PASS
 
-![Simulation result test 1](images/spi_res1.png)
+![Simulation result test 1]( spi_res1.png)
 
 **Test 2 — `TX_VALUE = 0xFA`** → expected `RX DATA = 0xFA`
 
@@ -653,7 +653,7 @@ PASS
 
 > `spi_res2.png` — Simulation result, Test 2: `TX_VALUE=0xFA` → `RX DATA=0xFA`, PASS
 
-![Simulation result test 2](images/spi_res2.png)
+![Simulation result test 2]( spi_res2.png)
 
 **Test 3 — `TX_VALUE = 0xBE`** → expected `RX DATA = 0xBE`
 
@@ -672,7 +672,7 @@ PASS
 
 > `spi_res3.png` — Simulation result, Test 3: `TX_VALUE=0xBE` → `RX DATA=0xBE`, PASS
 
-![Simulation result test 3](images/spi_res3.png)
+![Simulation result test 3]( spi_res3.png)
 
 Across all three runs the log sequence is identical (`SPI CTRL → TX DATA → SPI START → SPI DONE → Transfer Started... → STATUS → RX DATA → PASS`), which is exactly what a correctly-designed peripheral should show: **deterministic, repeatable timing driven by the FSM and bit counter, independent of the actual data value being shifted.**
 
@@ -758,7 +758,7 @@ Info: Max delay posedge clk -> <async>    : 14.16 ns
 **1.65× timing margin** between the possible **19.88 MHz vs. 12 MHz needed** shows that the additional combinational logic introduced by the SPI Master implementation (decoder, FSM, and paths to compare/shift) does not introduce any critical path close to the clock frequency requirement.
 > `Timing_match.png` — nextpnr static timing report: 19.88 MHz achievable, PASS at the 12 MHz system clock
 
-![Timing report](images/Timing_match.png)
+![Timing report]( Timing_match.png)
 
 ### 5.4 Bitstream Generation (`icetime` + `icepack`)
 
