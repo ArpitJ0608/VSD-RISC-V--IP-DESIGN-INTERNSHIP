@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Task Overview](#task-overview)
 2. [Tools & Environment](#tools--environment)
