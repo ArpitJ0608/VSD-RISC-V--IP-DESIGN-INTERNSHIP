@@ -1,4 +1,4 @@
-# Task-2: Design & Integration of  First Memory-Mapped IP GPIO
+# Task-4: Design & Integration of  First Memory-Mapped IP GPIO
 
 This task moves from environmental setup to actual IP design, which involves designing a simple memory-mapped GPIO Output IP, implementing it in the already designed RISC-V SoC, and verifying it by simulation using iverilog and synthesise it.
 
